@@ -11,7 +11,7 @@ router.post('/login', (req, res) => {
     
     console.log('🔓 Query vulnerable ejecutada:', query);
     
-    db.get(query, (err, user) => {
+    db.all(query, (err, users) => {
         if (err) {
             // VULNERABILITY: Error information disclosure
             return res.status(500).json({ 
@@ -22,15 +22,15 @@ router.post('/login', (req, res) => {
             });
         }
         
-        if (user) {
+        if (users && users.length > 0) {
             // VULNERABILITY: Weak token (predictable)
-            const token = `token_${user.id}_${Date.now()}`;
+            const token = `token_${users[0].id}_${Date.now()}`;
             
             res.json({
                 success: true,
                 message: 'Login exitoso',
                 token: token,
-                user: {
+                users: users.map(user => ({
                     id: user.id,
                     username: user.username,
                     role: user.role,
@@ -38,7 +38,7 @@ router.post('/login', (req, res) => {
                     credit_card: user.credit_card,
                     phone: user.phone,
                     email: user.email
-                }
+                }))
             });
         } else {
             res.status(401).json({ 
